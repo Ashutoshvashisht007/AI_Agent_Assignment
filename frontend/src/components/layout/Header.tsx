@@ -11,7 +11,7 @@ export const Header = ({ isDarkMode, toggleTheme, toggleSidebar }: HeaderProps) 
     <div className="flex items-center gap-3">
       <button 
         onClick={toggleSidebar}
-        className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg md:hidden"
+        className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg lg:hidden"
       >
         <Menu size={20} />
       </button>

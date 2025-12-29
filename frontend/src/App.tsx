@@ -15,17 +15,28 @@ const App = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
 
   const scrollContainerRef = useAutoScroll(messages);
+  const getGuestUserId = () => {
+    let id = localStorage.getItem('guestUserId');
+    if (!id) {
+      id = crypto.randomUUID();
+      localStorage.setItem('guestUserId', id);
+    }
+    return id;
+  };
+
+  const guestUserId = getGuestUserId();
 
   const [sessionId, setSessionId] = useState<string | null>(
     localStorage.getItem('sessionId')
   );
 
   useEffect(() => {
-    if (!sessionId || messages.length > 0) return;
+    if (!sessionId || historyLoaded) return;
 
-    fetchHistory(sessionId)
+    fetchHistory(sessionId,guestUserId)
       .then((data) => {
         const mapped = data.messages.map((m: any) => ({
           id: crypto.randomUUID(),
@@ -35,8 +46,8 @@ const App = () => {
         }));
         setMessages(mapped);
       })
-      .catch(console.error);
-  }, [sessionId]);
+      .catch(console.error).finally(() => setHistoryLoaded(true));
+  }, [sessionId, historyLoaded]);
 
 
   const handleSend = async (content: string = input) => {
@@ -60,6 +71,7 @@ const App = () => {
       if (!sessionId) {
         setSessionId(res.sessionId);
         localStorage.setItem('sessionId', res.sessionId);
+        setHistoryLoaded(false);
       }
 
       const aiMsg: Message = {
@@ -80,9 +92,16 @@ const App = () => {
 
   const handleNewChat = () => {
     setMessages([]);
-    setIsSidebarOpen(false);
     setSessionId(null);
     localStorage.removeItem('sessionId');
+  };
+
+  const handleSelectConversation = (conversationId: string) => {
+    setMessages([]);
+    setHistoryLoaded(false);
+    setSessionId(conversationId);
+    localStorage.setItem('sessionId', conversationId);
+    setIsSidebarOpen(false);
   };
 
   useEffect(() => {
@@ -98,7 +117,10 @@ const App = () => {
 
       <Sidebar
         isOpen={isSidebarOpen}
+        setIsOpen={setIsSidebarOpen}
         onNewChat={handleNewChat}
+        onSelectConversation={handleSelectConversation}
+        sessionId={sessionId}
       />
       <div className="flex-1 flex flex-col min-w-0 relative">
         <Header
@@ -111,8 +133,10 @@ const App = () => {
           ref={scrollContainerRef}
           className="flex-1 overflow-y-auto scrollbar-hide custom-scrollbar"
         >
-          {messages.length === 0 ? (
-            <LandingScreen onSuggestionClick={(text) => handleSend(text)} />
+          {messages.length === 0 && !sessionId ? (
+            <div className="py-4 md:py-0 md:flex md:items-center md:justify-center h-full">
+              <LandingScreen onSuggestionClick={(text) => handleSend(text)} />
+            </div>
           ) : (
             <div className="px-4">
               <MessageList messages={messages} isLoading={isLoading} />
@@ -131,7 +155,7 @@ const App = () => {
 
         {isSidebarOpen && (
           <div
-            className="fixed inset-0 bg-black/50 z-10 md:hidden"
+            className="fixed inset-0 bg-black/50 z-10 lg:hidden"
             onClick={() => setIsSidebarOpen(false)}
           />
         )}

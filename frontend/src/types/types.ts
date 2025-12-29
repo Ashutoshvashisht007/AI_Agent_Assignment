@@ -6,3 +6,8 @@ export interface Message {
   content: string;
   timestamp: Date;
 }
+
+export type Conversation = {
+  id: string;
+  title: string | null;
+};
