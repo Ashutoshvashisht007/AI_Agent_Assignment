@@ -6,14 +6,27 @@ import { motion } from 'framer-motion';
 interface MessageListProps {
   messages: Message[];
   isLoading: boolean;
+  isHistoryLoading?: boolean;
 }
 
-export const MessageList = ({ messages, isLoading }: MessageListProps) => {
+export const MessageList = ({ messages, isLoading, isHistoryLoading }: MessageListProps) => {
   return (
     <div className="max-w-3xl mx-auto space-y-8 pb-32 pt-4">
-      {messages.map((m) => (
-        <MessageItem key={m.id} message={m} />
-      ))}
+      {isHistoryLoading ? (
+        Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} className="flex gap-4 animate-pulse">
+            <div className="w-8 h-8 rounded-full bg-slate-300 dark:bg-slate-600 shrink-0"></div>
+            <div className="flex-1 space-y-2">
+              <div className="h-4 bg-slate-300 dark:bg-slate-600 rounded w-3/4"></div>
+              <div className="h-4 bg-slate-300 dark:bg-slate-600 rounded w-1/2"></div>
+            </div>
+          </div>
+        ))
+      ) : (
+        messages.map((m) => (
+          <MessageItem key={m.id} message={m} />
+        ))
+      )}
       
       {isLoading && (
         <motion.div 
